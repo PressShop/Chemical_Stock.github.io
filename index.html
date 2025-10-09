@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Chemical Inventory</title>
+<style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    padding: 40px;
+    background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+    color: #333;
+  }
+
+  h1 {
+    text-align: center;
+    color: #2e7d32;
+    margin-bottom: 25px;
+  }
+
+  .container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 25px;
+    max-width: 900px;
+    margin: auto;
+  }
+
+  .add-button {
+    display: block;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background 0.3s;
+  }
+
+  .add-button:hover {
+    background-color: #43a047;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  th, td {
+    padding: 10px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #66bb6a;
+    color: white;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9fbe7;
+  }
+
+  tr:hover {
+    background-color: #f1f8e9;
+  }
+
+  input[type=number], input[type=text] {
+    width: 70px;
+    text-align: center;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: box-shadow 0.2s, border 0.2s;
+  }
+
+  input[type=number]:focus, input[type=text]:focus {
+    border-color: #66bb6a;
+    box-shadow: 0 0 5px rgba(102,187,106,0.5);
+  }
+
+  input[name="chemicalName"] {
+    width: 150px;
+    text-align: left;
+  }
+
+  .spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .spinner button {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background-color: #a5d6a7;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 18px;
+  }
+
+  .spinner button:hover {
+    background-color: #81c784;
+  }
+
+  .delete-button {
+    padding: 5px 10px;
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .delete-button:hover {
+    background-color: #c62828;
+  }
+
+  .status-warning {
+    background-color: #fff8e1;
+  }
+
+  .status-error {
+    background-color: #ffebee;
+  }
+</style>
+</head>
+<body>
+
+<h1>ระบบจัดการสารเคมี (Chemical Inventory)</h1>
+<div class="container">
+  <button class="add-button" onclick="addChemical()">➕ เพิ่มสารเคมี</button>
+
+  <table id="chemicalTable">
+    <thead>
+      <tr>
+        <th>ชื่อสารเคมี</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>ปัจจุบัน</th>
+        <th>ลบ</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+function createChemicalRow(name = "สารเคมีใหม่") {
+  const tbody = document.querySelector("#chemicalTable tbody");
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td><input type="text" name="chemicalName" value="${name}"></td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="0" min="0" onchange="validateRow(this)">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="10" min="0" onchange="validateRow(this)">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="5" min="0" onchange="validateRow(this)">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td><button class="delete-button" onclick="deleteChemical(this)">🗑️</button></td>
+  `;
+
+  tbody.appendChild(tr);
+  validateRow(tr);
+}
+
+function addChemical() {
+  createChemicalRow();
+}
+
+function deleteChemical(btn) {
+  btn.closest("tr").remove();
+}
+
+function increase(btn){
+  const input = btn.parentElement.querySelector("input");
+  input.value = parseInt(input.value || 0) + 1;
+  validateRow(input);
+}
+
+function decrease(btn){
+  const input = btn.parentElement.querySelector("input");
+  input.value = Math.max(0, parseInt(input.value || 0) - 1);
+  validateRow(input);
+}
+
+function validateRow(el){
+  const tr = el.closest("tr");
+  const inputs = tr.querySelectorAll("input[type=number]");
+  const min = parseInt(inputs[0].value || 0);
+  const max = parseInt(inputs[1].value || 0);
+  const current = parseInt(inputs[2].value || 0);
+
+  tr.classList.remove("status-warning", "status-error");
+  if (current < min) tr.classList.add("status-warning");
+  if (current > max) tr.classList.add("status-error");
+}
+
+// เริ่มต้นด้วย 3 สารเคมี
+createChemicalRow("Chemical A");
+createChemicalRow("Chemical B");
+createChemicalRow("Chemical C");
+</script>
+
+</body>
+</html>
