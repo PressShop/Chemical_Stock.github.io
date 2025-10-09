@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Chemical Stock</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+
+  h1 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 15px;
+  }
+
+  .btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: 0.18s;
+    font-size: 15px;
+  }
+
+  .btn:hover { background-color:#45a049; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    table-layout: fixed;
+  }
+
+  th, td {
+    border-bottom: 1px solid #e6e6e6;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  th:nth-child(1), td:nth-child(1) { width: 40px; }
+  th:nth-child(2), td:nth-child(2) { width: 30%; text-align: left; padding-left:8px; }
+  th:nth-child(3), td:nth-child(3) { width: 10%; }
+  th:nth-child(4), td:nth-child(4) { width: 10%; }
+  th:nth-child(5), td:nth-child(5) { width: 15%; }
+  th:nth-child(6), td:nth-child(6) { width: 40px; }
+
+  th {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: 600;
+  }
+
+  input[type="text"], input[type="number"] {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover { transform: scale(1.1); }
+
+  /* popup */
+  .popup {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.35);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .popup-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px 30px;
+    width: 360px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .popup-content h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  .popup-content label {
+    align-self: flex-start;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  .popup-content input[type=text] {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+  .minmax-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .minmax-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .minmax-group label {
+    width: 40px;
+    text-align: right;
+  }
+
+  .minmax-group input {
+    width: 80px;
+  }
+
+  .minmax-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .minmax-buttons button {
+    width: 38px;
+    height: 38px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    font-size: 20px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .minmax-buttons button:hover { background:#45a049; }
+
+  .popup-actions {
+    text-align: center;
+    margin-top: 15px;
+  }
+
+  .popup-actions button {
+    margin: 5px;
+  }
+
+  /* current-group: ปุ่ม + - อยู่ขวาของช่อง */
+  .current-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .current-group input {
+    width: 80px;
+  }
+
+  .current-group button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .current-group button:hover {
+    background-color: #45a049;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container {
+      padding: 15px;
+    }
+    h1 {
+      font-size: 20px;
+    }
+    .btn {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    table th, table td {
+      font-size: 13px;
+      padding: 6px;
+    }
+    th:nth-child(2), td:nth-child(2) { width: 35%; }
+    th:nth-child(3), td:nth-child(3),
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5) { width: 15%; }
+    th:nth-child(1), td:nth-child(1),
+    th:nth-child(6), td:nth-child(6) { width: 10%; }
+
+    input[type="text"], input[type="number"] {
+      font-size: 14px;
+      padding: 5px 6px;
+    }
+
+    .popup-content {
+      width: 90%;
+      padding: 20px;
+    }
+
+    .minmax-group {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .minmax-buttons {
+      margin-top: 5px;
+    }
+
+    .minmax-group input {
+      width: 60px;
+    }
+
+    .current-group input {
+      width: 60px;
+    }
+
+    .minmax-buttons button,
+    .current-group button {
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Chemical Stock</h1>
+  <button class="btn" onclick="openPopup()">+ เพิ่มสารเคมี</button>
+
+  <table id="chemTable">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Name</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Stock</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- popup -->
+<div id="popup" class="popup">
+  <div class="popup-content">
+    <h2 id="popupTitle">เพิ่มสารเคมี</h2>
+    <label for="chemName">Chemical Name</label>
+    <input id="chemName" type="text" />
+
+    <div class="minmax-wrapper">
+      <div class="minmax-group">
+        <label>Min:</label>
+        <input id="minInput" type="number" value="0" min="0">
+        <div class="minmax-buttons">
+          <button type="button" onclick="changeValue('minInput',1)">+</button>
+          <button type="button" onclick="changeValue('minInput',-1)">−</button>
+        </div>
+      </div>
+
+      <div class="minmax-group">
+        <label>Max:</label>
+        <input id="maxInput" type="number" value="0" min="0">
+        <div class="minmax-buttons">
+          <button type="button" onclick="changeValue('maxInput',1)">+</button>
+          <button type="button" onclick="changeValue('maxInput',-1)">−</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup-actions">
+      <button class="btn" onclick="saveChemical()">บันทึก</button>
+      <button class="btn" style="background:#999;" onclick="closePopup()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tableBody = document.querySelector("#chemTable tbody");
+  const popup = document.getElementById("popup");
+  const chemName = document.getElementById("chemName");
+  const minInput = document.getElementById("minInput");
+  const maxInput = document.getElementById("maxInput");
+  const popupTitle = document.getElementById("popupTitle");
+
+  let chemicals = [];
+  let editIndex = null;
+
+  function openPopup(edit=false, index=null) {
+    popup.style.display = "flex";
+    if(edit){
+      popupTitle.textContent = "แก้ไขสารเคมี";
+      editIndex = index;
+      const c = chemicals[index];
+      chemName.value = c.name;
+      minInput.value = c.min;
+      maxInput.value = c.max;
+    } else {
+      popupTitle.textContent = "เพิ่มสารเคมี";
+      editIndex = null;
+      chemName.value = "";
+      minInput.value = 0;
+      maxInput.value = 0;
+    }
+  }
+
+  function closePopup() { popup.style.display = "none"; }
+
+  function changeValue(id, delta){
+    const input = document.getElementById(id);
+    input.value = Math.max(0, parseInt(input.value || 0) + delta);
+  }
+
+  function saveChemical(){
+    const name = chemName.value.trim();
+    const min = parseInt(minInput.value);
+    const max = parseInt(maxInput.value);
+    if(!name){
+      alert("กรุณาใส่ชื่อสารเคมี");
+      return;
+    }
+
+    if(editIndex !== null){
+      chemicals[editIndex].name = name;
+      chemicals[editIndex].min = min;
+      chemicals[editIndex].max = max;
+    } else {
+      chemicals.push({name, min, max, current:0});
+    }
+
+    renderTable();
+    closePopup();
+  }
+
+  function renderTable(){
+    tableBody.innerHTML = "";
+    chemicals.forEach((chem, i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><button class="icon-btn" onclick="openPopup(true,${i})">✏️</button></td>
+        <td style="text-align:left;">${chem.name}</td>
+        <td>${chem.min}</td>
+        <td>${chem.max}</td>
+        <td>
+          <div class="current-group">
+            <input type="number" value="${chem.current}" min="0" onchange="updateCurrent(${i}, this.value)">
+            <button onclick="changeCurrent(${i},1)">+</button>
+            <button onclick="changeCurrent(${i},-1)">−</button>
+          </div>
+        </td>
+        <td><button class="icon-btn" onclick="deleteChemical(${i})">🗑️</button></td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  function changeCurrent(index, delta){
+    const c = chemicals[index];
+    c.current = Math.max(0, (c.current || 0) + delta);
+    renderTable();
+  }
+
+  function updateCurrent(index, value){
+    chemicals[index].current = Math.max(0, parseInt(value) || 0);
+  }
+
+  function deleteChemical(i){
+    if(confirm("ต้องการลบสารเคมีนี้หรือไม่?")){
+      chemicals.splice(i,1);
+      renderTable();
+    }
+  }
+
+  window.addEventListener("click",(e)=>{
+    if(e.target === popup) closePopup();
+  });
+</script>
+</body>
+</html>
