@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Chemical Stock</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f0f2f5;
+  }
+  h1 {
+    text-align: center;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
+    background-color: #4CAF50;
+    color: white;
+  }
+  input[type=number], input[type=text] {
+    width: 70px;
+    text-align: center;
+  }
+  input[name="chemicalName"] {
+    width: 120px;
+    text-align: left;
+  }
+  .spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spinner button {
+    width: 25px;
+    height: 25px;
+    margin: 0 2px;
+    cursor: pointer;
+  }
+  .add-button {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .delete-button {
+    padding: 3px 6px;
+    cursor: pointer;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chemical Stock</h1>
+<button class="add-button" onclick="addChemical()">➕ เพิ่มสารเคมี</button>
+
+<table id="chemicalTable">
+  <thead>
+    <tr>
+      <th>สารเคมี</th>
+      <th>Min</th>
+      <th>Max</th>
+      <th>ปัจจุบัน</th>
+      <th>ลบ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- แถวของสารเคมีจะถูกสร้างด้วย JS -->
+  </tbody>
+</table>
+
+<script>
+function createChemicalRow(name = "สารเคมีใหม่") {
+  const tbody = document.querySelector("#chemicalTable tbody");
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td><input type="text" name="chemicalName" value="${name}"></td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="0" min="0">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="0" min="0">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td>
+      <div class="spinner">
+        <button type="button" onclick="decrease(this)">-</button>
+        <input type="number" value="0" min="0">
+        <button type="button" onclick="increase(this)">+</button>
+      </div>
+    </td>
+    <td><button class="delete-button" onclick="deleteChemical(this)">🗑️</button></td>
+  `;
+
+  tbody.appendChild(tr);
+}
+
+function addChemical() {
+  createChemicalRow();
+}
+
+function deleteChemical(btn) {
+  const row = btn.closest("tr");
+  row.remove();
+}
+
+function increase(btn){
+  const input = btn.parentElement.querySelector("input");
+  input.value = parseInt(input.value || 0) + 1;
+}
+
+function decrease(btn){
+  const input = btn.parentElement.querySelector("input");
+  input.value = Math.max(0, parseInt(input.value || 0) - 1);
+}
+
+// สร้างตัวอย่างเริ่มต้น 3 สารเคมี
+createChemicalRow("Chemical 1");
+createChemicalRow("Chemical 2");
+createChemicalRow("Chemical 3");
+</script>
+
+</body>
+</html>
