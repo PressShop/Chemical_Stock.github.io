@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Chemical Stock (Firebase)</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+  h1 { text-align: center; color: #222; margin-bottom: 15px; }
+  .btn {
+    background-color: #4CAF50; color: white; border: none;
+    border-radius: 8px; padding: 10px 16px; cursor: pointer;
+    transition: 0.18s; font-size: 15px;
+  }
+  .btn:hover { background-color:#45a049; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+  th, td {
+    border-bottom: 1px solid #e6e6e6; padding: 10px; text-align: center;
+    vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  th:nth-child(1), td:nth-child(1) { width: 40px; }
+  th:nth-child(2), td:nth-child(2) { width: 30%; text-align: left; padding-left:8px; }
+  th:nth-child(3), td:nth-child(3) { width: 10%; }
+  th:nth-child(4), td:nth-child(4) { width: 10%; }
+  th:nth-child(5), td:nth-child(5) { width: 15%; }
+  th:nth-child(6), td:nth-child(6) { width: 40px; }
+  th { background-color: #4CAF50; color: white; font-weight: 600; }
+  input[type="text"], input[type="number"] {
+    border: 1px solid #ccc; border-radius: 8px; padding: 6px 8px;
+    font-size: 15px; text-align: center;
+  }
+  .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
+  .icon-btn:hover { transform: scale(1.1); }
+  .popup {
+    display: none; position: fixed; z-index: 50; left: 0; top: 0;
+    width: 100%; height: 100%; background-color: rgba(0,0,0,0.35);
+    align-items: center; justify-content: center;
+  }
+  .popup-content {
+    background: #fff; border-radius: 12px; padding: 25px 30px;
+    width: 360px; box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .popup-content h2 { margin-top: 0; margin-bottom: 20px; }
+  .popup-content label { align-self: flex-start; margin-bottom: 5px; }
+  .popup-actions { text-align: center; margin-top: 15px; }
+  .popup-actions button { margin: 5px; }
+  .current-group { display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .current-group input { width: 80px; }
+  .current-group button {
+    width: 32px; height: 32px; border: none; border-radius: 6px;
+    background-color: #4CAF50; color: white; font-size: 18px; cursor: pointer;
+  }
+  .current-group button:hover { background-color: #45a049; }
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>Chemical Stock</h1>
+  <button class="btn" onclick="openPopup()">+ เพิ่มสารเคมี</button>
+  <table id="chemTable">
+    <thead>
+      <tr>
+        <th></th><th>Name</th><th>Min</th><th>Max</th><th>Stock</th><th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- popup -->
+<div id="popup" class="popup">
+  <div class="popup-content">
+    <h2 id="popupTitle">เพิ่มสารเคมี</h2>
+    <label>ชื่อสารเคมี</label>
+    <input id="chemName" type="text" />
+    <label>Min:</label>
+    <input id="minInput" type="number" value="0" min="0">
+    <label>Max:</label>
+    <input id="maxInput" type="number" value="0" min="0">
+    <div class="popup-actions">
+      <button class="btn" onclick="saveChemical()">บันทึก</button>
+      <button class="btn" style="background:#999;" onclick="closePopup()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ✅ Firebase Config ของคุณ
+  const firebaseConfig = {
+    apiKey: "AIzaSyAThGdGW_bbuPEFt5ywzIPVy4UsqKVOEQ4",
+    authDomain: "chemical-stock-a027d.firebaseapp.com",
+    projectId: "chemical-stock-a027d",
+    storageBucket: "chemical-stock-a027d.firebasestorage.app",
+    messagingSenderId: "13090617551",
+    appId: "1:13090617551:web:9c7e7fb9588328ab669fba",
+    measurementId: "G-1HH8LJGBES"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const tableBody = document.querySelector("#chemTable tbody");
+  const popup = document.getElementById("popup");
+  const chemName = document.getElementById("chemName");
+  const minInput = document.getElementById("minInput");
+  const maxInput = document.getElementById("maxInput");
+  const popupTitle = document.getElementById("popupTitle");
+  let editId = null;
+
+  function openPopup(edit=false, id=null, data=null) {
+    popup.style.display = "flex";
+    if (edit) {
+      popupTitle.textContent = "แก้ไขสารเคมี";
+      editId = id;
+      chemName.value = data.name;
+      minInput.value = data.min;
+      maxInput.value = data.max;
+    } else {
+      popupTitle.textContent = "เพิ่มสารเคมี";
+      editId = null;
+      chemName.value = "";
+      minInput.value = 0;
+      maxInput.value = 0;
+    }
+  }
+  function closePopup() { popup.style.display = "none"; }
+
+  async function saveChemical() {
+    const name = chemName.value.trim();
+    const min = parseInt(minInput.value);
+    const max = parseInt(maxInput.value);
+    if (!name) { alert("กรุณาใส่ชื่อสารเคมี"); return; }
+
+    if (editId) {
+      await db.collection("chemicals").doc(editId).update({ name, min, max });
+    } else {
+      await db.collection("chemicals").add({ name, min, max, current: 0 });
+    }
+    closePopup();
+  }
+
+  function renderTable(docs) {
+    tableBody.innerHTML = "";
+    docs.forEach(doc => {
+      const chem = doc.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><button class="icon-btn" onclick="openPopup(true,'${doc.id}',${JSON.stringify(chem).replace(/"/g,'&quot;')})">✏️</button></td>
+        <td>${chem.name}</td>
+        <td>${chem.min}</td>
+        <td>${chem.max}</td>
+        <td>
+          <div class="current-group">
+            <input type="number" value="${chem.current}" min="0" onchange="updateCurrent('${doc.id}', this.value)">
+            <button onclick="changeCurrent('${doc.id}', 1)">+</button>
+            <button onclick="changeCurrent('${doc.id}', -1)">−</button>
+          </div>
+        </td>
+        <td><button class="icon-btn" onclick="deleteChemical('${doc.id}')">🗑️</button></td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  async function changeCurrent(id, delta) {
+    const docRef = db.collection("chemicals").doc(id);
+    const docSnap = await docRef.get();
+    const current = (docSnap.data().current || 0) + delta;
+    await docRef.update({ current: Math.max(0, current) });
+  }
+
+  async function updateCurrent(id, value) {
+    await db.collection("chemicals").doc(id).update({ current: Math.max(0, parseInt(value) || 0) });
+  }
+
+  async function deleteChemical(id) {
+    if (confirm("ต้องการลบสารเคมีนี้หรือไม่?")) {
+      await db.collection("chemicals").doc(id).delete();
+    }
+  }
+
+  // 🔄 โหลดข้อมูลอัตโนมัติแบบเรียลไทม์
+  db.collection("chemicals").onSnapshot(snapshot => {
+    renderTable(snapshot.docs);
+  });
+
+  window.addEventListener("click",(e)=>{ if(e.target===popup) closePopup(); });
+</script>
+</body>
+</html>
